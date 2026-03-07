@@ -1,0 +1,64 @@
+{
+  "ambiences": [
+    {
+      "id": "1",
+      "title": "Forest Focus",
+      "tag": "Focus",
+      "durationMinutes": 3,
+      "description": "Immerse yourself in a peaceful forest setting with gentle bird calls and rustling leaves. Perfect for deep work and concentration.",
+      "imagePath": "assets/images/forest.jpg",
+      "audioPath": "assets/audios/forest.mp3",
+      "sensoryRecipes": ["Birds", "Rustling Leaves", "Breeze", "Earth"]
+    },
+    {
+      "id": "2",
+      "title": "Ocean Calm",
+      "tag": "Calm",
+      "durationMinutes": 3,
+      "description": "Let the soothing sounds of ocean waves wash away your stress. The rhythmic patterns encourage deep breathing and relaxation.",
+      "imagePath": "assets/images/ocean.jpg",
+      "audioPath": "assets/audios/ocean.mp3",
+      "sensoryRecipes": ["Waves", "Seagulls", "Salt Air", "Soft Light"]
+    },
+    {
+      "id": "3",
+      "title": "Rainy Night",
+      "tag": "Sleep",
+      "durationMinutes": 3,
+      "description": "Soft raindrops and distant thunder create the perfect soundscape for better sleep. Scientifically proven to improve sleep quality.",
+      "imagePath": "assets/images/rain.jpg",
+      "audioPath": "assets/audios/rain.mp3",
+      "sensoryRecipes": ["Soft Rain", "Thunder", "Petrichor", "Darkness"]
+    },
+    {
+      "id": "4",
+      "title": "Mountain Stream",
+      "tag": "Reset",
+      "durationMinutes": 3,
+      "description": "The gentle flow of a mountain stream refreshes your mind and spirit. Ideal for resetting after a busy day.",
+      "imagePath": "assets/images/stream.jpg",
+      "audioPath": "assets/audios/stream.mp3",
+      "sensoryRecipes": ["Running Water", "Birds", "Wind", "Fresh Air"]
+    },
+    {
+      "id": "5",
+      "title": "Zen Garden",
+      "tag": "Calm",
+      "durationMinutes": 3,
+      "description": "Walk through a serene Japanese garden with water fountains and wind chimes. A minimalist approach to mindfulness.",
+      "imagePath": "assets/images/garden.jpg",
+      "audioPath": "assets/audios/garden.mp3",
+      "sensoryRecipes": ["Water Fountain", "Wind Chimes", "Silence", "Stone Steps"]
+    },
+    {
+      "id": "6",
+      "title": "Thunder Meditation",
+      "tag": "Focus",
+      "durationMinutes": 3,
+      "description": "Harness the power of distant thunder combined with rain. Perfect for concentration during challenging tasks.",
+      "imagePath": "assets/images/thunder.jpg",
+      "audioPath": "assets/audios/thunder.mp3",
+      "sensoryRecipes": ["Thunder", "Rain", "Binaural", "Mist"]
+    }
+  ]
+}
