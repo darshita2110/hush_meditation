@@ -1,23 +1,17 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-
   AppColors._();
 
-  // PRIMARY COLOR PALETTE
-  static const Color primary = Color(0xFF5B5FDE);          // Main brand color
-  static const Color primaryLight = Color(0xFFE8EAFD);     // Light variant
-  static const Color primaryDark = Color(0xFF3D40A0);      // Dark variant
+  static const Color primary = Color(0xFF5B5FDE);
+  static const Color primaryLight = Color(0xFFE8EAFD);
+  static const Color primaryDark = Color(0xFF3D40A0);
 
-  // ACCENT COLOR
-  // Warm gold for positive interactions (saves, completions)
   static const Color accent = Color(0xFFF4A460);
 
-  // NEUTRAL COLORS
-  // A clean gray scale for text, backgrounds, dividers
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF0F0F0F);
-  
+
   static const Color gray50 = Color(0xFFFAFAFA);
   static const Color gray100 = Color(0xFFF3F4F6);
   static const Color gray200 = Color(0xFFE5E7EB);
@@ -29,30 +23,27 @@ class AppColors {
   static const Color gray800 = Color(0xFF1F2937);
   static const Color gray900 = Color(0xFF111827);
 
-  // SEMANTIC COLORS
-  // Used for feedback and status
-  static const Color success = Color(0xFF10B981);          
-  static const Color warning = Color(0xFFF59E0B);          
-  static const Color error = Color(0xFFEF4444);            
-  static const Color info = Color(0xFF3B82F6);             
+  static const Color success = Color(0xFF10B981);
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color error = Color(0xFFEF4444);
+  static const Color info = Color(0xFF3B82F6);
 
-  // GRADIENTS
-  // Used for backgrounds and premium feels
   static const LinearGradient meditationGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFF5B5FDE), 
-      Color(0xFF8B5CF6),
-    ],
+    colors: [Color(0xFF5B5FDE), Color(0xFF8B5CF6)],
   );
 
   static const LinearGradient calmGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [
-      Color(0xFFC7D2FE), 
-      Color(0xFFDDD6FE), 
-    ],
+    colors: [Color(0xFFC7D2FE), Color(0xFFDDD6FE)],
+  );
+
+  /// Used in player background and card image containers
+  static const LinearGradient breathingGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF5B5FDE), Color(0xFF8B5CF6)],
   );
 }

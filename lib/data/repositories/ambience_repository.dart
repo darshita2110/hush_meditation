@@ -5,9 +5,11 @@ import '../models/ambience_model.dart';
 class AmbienceRepository {
   Future<List<AmbienceModel>> getAmbiences() async {
     try {
-      final jsonString = await rootBundle.loadString('assets/data/ambiences.json');
-      final jsonData = jsonDecode(jsonString) as List;
-      return jsonData
+      final jsonString =
+          await rootBundle.loadString('assets/data/ambiences.json');
+      final jsonData = jsonDecode(jsonString) as Map<String, dynamic>;
+      final list = jsonData['ambiences'] as List;
+      return list
           .map((item) => AmbienceModel.fromJson(item as Map<String, dynamic>))
           .toList();
     } catch (e) {
@@ -18,9 +20,9 @@ class AmbienceRepository {
   Future<AmbienceModel> getAmbienceById(String id) async {
     final ambiences = await getAmbiences();
     try {
-      return ambiences.firstWhere((ambience) => ambience.id == id);
-    } catch (e) {
-      throw Exception('Ambience not found');
+      return ambiences.firstWhere((a) => a.id == id);
+    } catch (_) {
+      throw Exception('Ambience not found: $id');
     }
   }
 }

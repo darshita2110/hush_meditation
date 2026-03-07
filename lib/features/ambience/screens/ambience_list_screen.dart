@@ -4,20 +4,19 @@ import 'package:go_router/go_router.dart';
 import 'package:arvyax_flutter_app/config/theme/app_colors.dart';
 import 'package:arvyax_flutter_app/features/ambience/controllers/ambience_controller.dart';
 import 'package:arvyax_flutter_app/features/ambience/widgets/ambience_card.dart';
+import 'package:arvyax_flutter_app/features/player/widgets/mini_player.dart';
 
 class AmbienceListScreen extends ConsumerWidget {
   const AmbienceListScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final searchQuery = ref.watch(searchQueryProvider);
     final selectedTag = ref.watch(selectedTagProvider);
     final filteredAmbiences = ref.watch(filteredAmbiencesProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('ArvyaX'),
-        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.history),
@@ -25,16 +24,17 @@ class AmbienceListScreen extends ConsumerWidget {
           ),
         ],
       ),
+      // MiniPlayer sits above the bottom system bar
+      bottomNavigationBar: const MiniPlayer(),
       body: CustomScrollView(
         slivers: [
-          // Search Bar
+          // ── Search bar ─────────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: TextField(
-                onChanged: (value) {
-                  ref.read(searchQueryProvider.notifier).state = value;
-                },
+                onChanged: (value) =>
+                    ref.read(searchQueryProvider.notifier).state = value,
                 decoration: InputDecoration(
                   hintText: 'Search ambiences...',
                   prefixIcon: const Icon(Icons.search),
@@ -50,7 +50,8 @@ class AmbienceListScreen extends ConsumerWidget {
               ),
             ),
           ),
-          // Tag Filters
+
+          // ── Tag filter chips ────────────────────────────────────────────
           SliverToBoxAdapter(
             child: SizedBox(
               height: 50,
@@ -70,7 +71,8 @@ class AmbienceListScreen extends ConsumerWidget {
                       },
                       selectedColor: AppColors.primary,
                       labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : AppColors.gray900,
+                        color:
+                            isSelected ? Colors.white : AppColors.gray900,
                       ),
                     ),
                   );
@@ -78,7 +80,8 @@ class AmbienceListScreen extends ConsumerWidget {
               ),
             ),
           ),
-          // Ambiences Grid
+
+          // ── Grid ────────────────────────────────────────────────────────
           filteredAmbiences.when(
             data: (ambiences) {
               if (ambiences.isEmpty) {
@@ -87,18 +90,19 @@ class AmbienceListScreen extends ConsumerWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.search_off,
-                          size: 64,
-                          color: AppColors.gray400,
-                        ),
+                        Icon(Icons.search_off,
+                            size: 64, color: AppColors.gray400),
                         const SizedBox(height: 16),
                         const Text('No ambiences found'),
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () {
-                            ref.read(searchQueryProvider.notifier).state = '';
-                            ref.read(selectedTagProvider.notifier).state = null;
+                            ref
+                                .read(searchQueryProvider.notifier)
+                                .state = '';
+                            ref
+                                .read(selectedTagProvider.notifier)
+                                .state = null;
                           },
                           child: const Text('Clear Filters'),
                         ),
@@ -111,7 +115,8 @@ class AmbienceListScreen extends ConsumerWidget {
               return SliverPadding(
                 padding: const EdgeInsets.all(16),
                 sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     mainAxisSpacing: 16,
                     crossAxisSpacing: 16,
@@ -122,7 +127,8 @@ class AmbienceListScreen extends ConsumerWidget {
                       final ambience = ambiences[index];
                       return AmbienceCard(
                         ambience: ambience,
-                        onTap: () => context.push('/detail/${ambience.id}'),
+                        onTap: () =>
+                            context.push('/detail/${ambience.id}'),
                       );
                     },
                     childCount: ambiences.length,
@@ -133,8 +139,8 @@ class AmbienceListScreen extends ConsumerWidget {
             loading: () => const SliverFillRemaining(
               child: Center(child: CircularProgressIndicator()),
             ),
-            error: (error, stack) => SliverFillRemaining(
-              child: Center(child: Text('Error: $error')),
+            error: (e, _) => SliverFillRemaining(
+              child: Center(child: Text('Error: $e')),
             ),
           ),
         ],

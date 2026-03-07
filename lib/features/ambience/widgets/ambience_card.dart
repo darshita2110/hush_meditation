@@ -22,30 +22,37 @@ class AmbienceCard extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image
-            Container(
-              height: 140,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                ),
-                gradient: AppColors.breathingGradient,
-              ),
-              child: Image.asset(
-                ambience.imagePath,
-                fit: BoxFit.cover,
+            // Image / gradient
+            Expanded(
+              flex: 5,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Container(
+                    decoration: const BoxDecoration(
+                      gradient: AppColors.breathingGradient,
+                    ),
+                  ),
+                  Image.asset(
+                    ambience.imagePath,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                ],
               ),
             ),
-            // Content
+            // Text content
             Expanded(
+              flex: 4,
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Text(
                       ambience.title,
@@ -53,17 +60,15 @@ class AmbienceCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
                     Text(
                       ambience.tag,
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.primary,
-                      ),
+                      style: AppTextStyles.caption
+                          .copyWith(color: AppColors.primary),
                     ),
-                    const SizedBox(height: 4),
                     Text(
-                      '${ambience.durationMinutes}-${ambience.durationMinutes + 1} min',
-                      style: AppTextStyles.caption,
+                      ambience.durationDisplay,
+                      style: AppTextStyles.caption
+                          .copyWith(color: AppColors.gray500),
                     ),
                   ],
                 ),

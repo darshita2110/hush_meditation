@@ -15,7 +15,8 @@ class SessionPlayerScreen extends ConsumerStatefulWidget {
   }) : super(key: key);
 
   @override
-  ConsumerState<SessionPlayerScreen> createState() => _SessionPlayerScreenState();
+  ConsumerState<SessionPlayerScreen> createState() =>
+      _SessionPlayerScreenState();
 }
 
 class _SessionPlayerScreenState extends ConsumerState<SessionPlayerScreen> {
@@ -28,87 +29,130 @@ class _SessionPlayerScreenState extends ConsumerState<SessionPlayerScreen> {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final playerState = ref.watch(playerProvider);
     final ambienceAsync = ref.watch(ambienceByIdProvider(widget.ambienceId));
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
           onPressed: () => context.pop(),
         ),
       ),
+      extendBodyBehindAppBar: true,
       body: ambienceAsync.when(
         data: (ambience) {
+          final elapsed = playerState.elapsedSeconds;
+          final total = ambience.durationSeconds;
+          final progress =
+              total > 0 ? (elapsed / total).clamp(0.0, 1.0) : 0.0;
+
           return Column(
             children: [
+              // ── Top: background + animation ──────────────────────────────
               Expanded(
                 child: Container(
-                  decoration: BoxDecoration(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
                     gradient: AppColors.breathingGradient,
                   ),
-                  child: Center(
+                  child: SafeArea(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Breathing Animation
-                        _BreathingCircle(),
-                        const SizedBox(height: 40),
+                        const _BreathingCircle(),
+                        const SizedBox(height: 32),
                         Text(
                           ambience.title,
-                          style: AppTextStyles.h2.copyWith(
-                            color: Colors.white,
-                          ),
+                          style: AppTextStyles.h2
+                              .copyWith(color: Colors.white),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          ambience.tag,
+                          style: AppTextStyles.body2
+                              .copyWith(color: Colors.white70),
                         ),
                       ],
                     ),
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(24),
+
+              // ── Bottom: controls ─────────────────────────────────────────
+              Container(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                color: Theme.of(context).scaffoldBackgroundColor,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Timer Display
-                    Text(
-                      '${playerState.elapsedSeconds ~/ 60}:${(playerState.elapsedSeconds % 60).toString().padLeft(2, '0')} / ${ambience.durationMinutes}:00',
-                      style: AppTextStyles.h4,
+                    // Timer text
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(_formatTime(elapsed),
+                            style: AppTextStyles.caption),
+                        Text(_formatTime(total),
+                            style: AppTextStyles.caption),
+                      ],
                     ),
-                    const SizedBox(height: 24),
-                    // Progress Bar
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: playerState.elapsedSeconds / ambience.durationSeconds,
-                        minHeight: 4,
-                        backgroundColor: AppColors.gray200,
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          AppColors.primary,
+                    const SizedBox(height: 8),
+
+                    // ── Seekable progress bar ────────────────────────────
+                    SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 4,
+                        thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 6),
+                        overlayShape: const RoundSliderOverlayShape(
+                            overlayRadius: 14),
+                        activeTrackColor: AppColors.primary,
+                        inactiveTrackColor: AppColors.gray200,
+                        thumbColor: AppColors.primary,
+                        overlayColor: AppColors.primary.withOpacity(0.2),
+                      ),
+                      child: Slider(
+                        value: progress,
+                        onChanged: (value) {
+                          final seekTo =
+                              Duration(seconds: (value * total).round());
+                          ref
+                              .read(playerProvider.notifier)
+                              .seek(seekTo);
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // ── Play / Pause button ──────────────────────────────
+                    SizedBox(
+                      width: 64,
+                      height: 64,
+                      child: FloatingActionButton(
+                        backgroundColor: AppColors.primary,
+                        onPressed: () =>
+                            ref.read(playerProvider.notifier).togglePlayPause(),
+                        child: Icon(
+                          playerState.isPlaying
+                              ? Icons.pause
+                              : Icons.play_arrow,
+                          color: Colors.white,
+                          size: 32,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    // Play/Pause Button
-                    FloatingActionButton(
-                      size: 64,
-                      onPressed: () {
-                        ref.read(playerProvider.notifier).togglePlayPause();
-                      },
-                      child: Icon(
-                        playerState.isPlaying ? Icons.pause : Icons.play_arrow,
-                        size: 32,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    // End Session Button
+                    const SizedBox(height: 20),
+
+                    // ── End session ──────────────────────────────────────
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
-                        onPressed: () {
-                          _showEndSessionDialog(context, ref);
-                        },
+                        onPressed: () =>
+                            _showEndSessionDialog(context, ref),
                         child: const Text('End Session'),
                       ),
                     ),
@@ -118,8 +162,9 @@ class _SessionPlayerScreenState extends ConsumerState<SessionPlayerScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+        loading: () =>
+            const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
       ),
     );
   }
@@ -127,35 +172,53 @@ class _SessionPlayerScreenState extends ConsumerState<SessionPlayerScreen> {
   void _showEndSessionDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text('End Session?'),
+        content: const Text(
+            'Your progress will be saved and you can write a reflection.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ref.read(playerProvider.notifier).endSession();
-              context.push('/reflection/${widget.ambienceId}');
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await ref.read(playerProvider.notifier).endSession();
+              if (mounted) {
+                context.push('/reflection/${widget.ambienceId}');
+              }
             },
-            child: const Text('End'),
+            child: Text(
+              'End',
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
     );
   }
+
+  String _formatTime(int totalSeconds) {
+    final m = totalSeconds ~/ 60;
+    final s = (totalSeconds % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
 }
 
+// ── Breathing animation ────────────────────────────────────────────────────────
+
 class _BreathingCircle extends StatefulWidget {
+  const _BreathingCircle();
+
   @override
   State<_BreathingCircle> createState() => _BreathingCircleState();
 }
 
 class _BreathingCircleState extends State<_BreathingCircle>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+  late final AnimationController _controller;
+  late final Animation<double> _scale;
 
   @override
   void initState() {
@@ -163,7 +226,11 @@ class _BreathingCircleState extends State<_BreathingCircle>
     _controller = AnimationController(
       duration: const Duration(seconds: 4),
       vsync: this,
-    )..repeat();
+    )..repeat(reverse: true);
+
+    _scale = Tween<double>(begin: 0.8, end: 1.2).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -175,15 +242,25 @@ class _BreathingCircleState extends State<_BreathingCircle>
   @override
   Widget build(BuildContext context) {
     return ScaleTransition(
-      scale: Tween(begin: 0.8, end: 1.2).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-      ),
+      scale: _scale,
       child: Container(
-        width: 120,
-        height: 120,
+        width: 140,
+        height: 140,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.white.withOpacity(0.3),
+          color: Colors.white.withOpacity(0.25),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.white.withOpacity(0.15),
+              blurRadius: 40,
+              spreadRadius: 10,
+            ),
+          ],
+        ),
+        child: const Icon(
+          Icons.self_improvement,
+          color: Colors.white,
+          size: 56,
         ),
       ),
     );

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:arvyax_flutter_app/config/theme/app_colors.dart';
 import 'package:arvyax_flutter_app/config/theme/text_styles.dart';
 import 'package:arvyax_flutter_app/features/ambience/controllers/ambience_controller.dart';
+import 'package:arvyax_flutter_app/features/player/widgets/mini_player.dart';
 
 class AmbienceDetailScreen extends ConsumerWidget {
   final String ambienceId;
@@ -18,102 +19,103 @@ class AmbienceDetailScreen extends ConsumerWidget {
     final ambienceAsync = ref.watch(ambienceByIdProvider(ambienceId));
 
     return ambienceAsync.when(
-      data: (ambience) {
-        return Scaffold(
-          body: CustomScrollView(
-            slivers: [
-              // Hero Image
-              SliverAppBar(
-                expandedHeight: 300,
-                flexibleSpace: FlexibleSpaceBar(
-                  background: Container(
-                    decoration: BoxDecoration(
-                      gradient: AppColors.breathingGradient,
+      data: (ambience) => Scaffold(
+        bottomNavigationBar: const MiniPlayer(),
+        body: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 280,
+              pinned: true,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Container(
+                      decoration: const BoxDecoration(
+                          gradient: AppColors.breathingGradient),
                     ),
-                    child: Image.asset(
+                    Image.asset(
                       ambience.imagePath,
                       fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                     ),
-                  ),
-                ),
-              ),
-              // Content
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title & Tag
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              ambience.title,
-                              style: AppTextStyles.h2,
-                            ),
-                          ),
-                          Chip(
-                            label: Text(ambience.tag),
-                            backgroundColor: AppColors.primaryLight,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${ambience.durationMinutes} minutes',
-                        style: AppTextStyles.caption,
-                      ),
-                      const SizedBox(height: 20),
-                      // Description
-                      Text(
-                        ambience.description,
-                        style: AppTextStyles.body1,
-                      ),
-                      const SizedBox(height: 24),
-                      // Sensory Recipes
-                      Text(
-                        'Sensory Elements',
-                        style: AppTextStyles.h4,
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: ambience.sensoryRecipes.map((recipe) {
-                          return Chip(
-                            label: Text(recipe),
-                            backgroundColor: AppColors.gray100,
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 32),
-                      // Start Session Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            context.push('/player/${ambience.id}');
-                          },
-                          child: const Text('Start Session'),
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.transparent, Colors.black54],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        );
-      },
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(ambience.title, style: AppTextStyles.h2),
+                        ),
+                        const SizedBox(width: 12),
+                        Chip(
+                          label: Text(ambience.tag),
+                          backgroundColor: AppColors.primaryLight,
+                          labelStyle: AppTextStyles.caption
+                              .copyWith(color: AppColors.primaryDark),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${ambience.durationMinutes} minutes',
+                      style:
+                          AppTextStyles.caption.copyWith(color: AppColors.gray500),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(ambience.description, style: AppTextStyles.body1),
+                    const SizedBox(height: 28),
+                    Text('Sensory Elements', style: AppTextStyles.h4),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: ambience.sensoryRecipes
+                          .map((r) => Chip(
+                                label: Text(r),
+                                backgroundColor: AppColors.gray100,
+                                labelStyle: AppTextStyles.caption,
+                              ))
+                          .toList(),
+                    ),
+                    const SizedBox(height: 36),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: () =>
+                            context.push('/player/${ambience.id}'),
+                        child: const Text('Start Session'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-      error: (error, stack) => Scaffold(
-        body: Center(child: Text('Error: $error')),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
     );
   }
 }
