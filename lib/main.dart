@@ -22,9 +22,8 @@ void main() async {
   );
 }
 
-class ArvyaxApp extends ConsumerWidget {
-
-  const ArvyaXApp({Key? key}) : super(key: key);
+class ArvyaXApp extends ConsumerWidget {
+  const ArvyaXApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
