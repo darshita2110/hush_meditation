@@ -22,7 +22,7 @@
       "durationMinutes": 3,
       "description": "Let the soothing sounds of ocean waves wash away your stress. The rhythmic patterns encourage deep breathing and relaxation.",
       "imagePath": "assets/images/ocean.jpg",
-      "audioPath": "assets/audios/ocean.mp3",
+      "audioPath": "assets/audios/rain.mp3",
       "sensoryRecipes": [
         "Waves",
         "Seagulls",
@@ -82,7 +82,7 @@
       "durationMinutes": 3,
       "description": "Harness the power of distant thunder combined with rain. Perfect for concentration during challenging tasks.",
       "imagePath": "assets/images/thunder.jpg",
-      "audioPath": "assets/audios/thunder.mp3",
+      "audioPath": "assets/audios/rain.mp3",
       "sensoryRecipes": [
         "Thunder",
         "Rain",
