@@ -42,24 +42,18 @@ class PlayerState {
         isLoading = true;
 
   PlayerState.playing({
-    required String ambienceId,
-    required AmbienceModel ambience,
-    required int elapsedSeconds,
-  })  : ambienceId = ambienceId,
-        ambience = ambience,
-        elapsedSeconds = elapsedSeconds,
-        isPlaying = true,
+    required this.ambienceId,
+    required this.ambience,
+    required this.elapsedSeconds,
+  })  : isPlaying = true,
         error = null,
         isLoading = false;
 
   PlayerState.paused({
-    required String ambienceId,
-    required AmbienceModel ambience,
-    required int elapsedSeconds,
-  })  : ambienceId = ambienceId,
-        ambience = ambience,
-        elapsedSeconds = elapsedSeconds,
-        isPlaying = false,
+    required this.ambienceId,
+    required this.ambience,
+    required this.elapsedSeconds,
+  })  : isPlaying = false,
         error = null,
         isLoading = false;
 
@@ -89,7 +83,6 @@ class PlayerState {
     );
   }
 
-  /// True when a session is loaded (playing or paused), used for mini-player
   bool get hasActiveSession =>
       ambienceId != null && ambience != null && !isLoading && error == null;
 }
@@ -103,12 +96,19 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
   late final AudioPlayer _audioPlayer;
   Timer? _timer;
 
+  // _elapsed is the SINGLE SOURCE OF TRUTH for elapsed time.
+  // The timer increments this. seek() updates this immediately.
+  // State is updated FROM this — never the other way around.
+  // This is what was causing slider snap-back: the timer was reading
+  // state.elapsedSeconds (stale) instead of this fresh local counter.
+  int _elapsed = 0;
+
   PlayerNotifier(this._repo, this._ref) : super(const PlayerState.idle()) {
     _audioPlayer = AudioPlayer();
     _restoreSession();
   }
 
-  // ── Session lifecycle ──────────────────────────────────────────────────────
+  // ── Session lifecycle ────────────────────────────────────────────────────
 
   Future<void> _restoreSession() async {
     await _repo.initialize();
@@ -116,14 +116,14 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
     if (saved != null && saved.isActive) {
       try {
         final ambience =
-            await _ref.read(ambienceByIdProvider(saved.ambienceId).future);
+        await _ref.read(ambienceByIdProvider(saved.ambienceId).future);
         await _audioPlayer.setAsset(ambience.audioPath);
         await _audioPlayer.setLoopMode(LoopMode.one);
-        // Restore paused – don't auto-play on restore so user decides
+        _elapsed = saved.elapsedSeconds;
         state = PlayerState.paused(
           ambienceId: ambience.id,
           ambience: ambience,
-          elapsedSeconds: saved.elapsedSeconds,
+          elapsedSeconds: _elapsed,
         );
       } catch (_) {
         await _repo.clearSessionState();
@@ -132,17 +132,18 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
   }
 
   Future<void> startSession(String ambienceId) async {
-    // If the same session is already loaded just return
     if (state.ambienceId == ambienceId && state.hasActiveSession) return;
 
     try {
       state = const PlayerState.loading();
       final ambience =
-          await _ref.read(ambienceByIdProvider(ambienceId).future);
+      await _ref.read(ambienceByIdProvider(ambienceId).future);
 
       await _audioPlayer.setAsset(ambience.audioPath);
       await _audioPlayer.setLoopMode(LoopMode.one);
       await _audioPlayer.play();
+
+      _elapsed = 0;
 
       state = PlayerState.playing(
         ambienceId: ambienceId,
@@ -157,59 +158,73 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
     }
   }
 
+  // FIX: use state.isPlaying (our source of truth) not _audioPlayer.playing
+  // just_audio's .playing getter lags on Android — this caused the button
+  // to appear stuck because we were toggling the wrong direction.
   Future<void> togglePlayPause() async {
     if (!state.hasActiveSession) return;
 
-    if (_audioPlayer.playing) {
+    if (state.isPlaying) {
       await _audioPlayer.pause();
       _timer?.cancel();
       state = PlayerState.paused(
         ambienceId: state.ambienceId!,
         ambience: state.ambience!,
-        elapsedSeconds: state.elapsedSeconds,
+        elapsedSeconds: _elapsed,
       );
     } else {
       await _audioPlayer.play();
       state = PlayerState.playing(
         ambienceId: state.ambienceId!,
         ambience: state.ambience!,
-        elapsedSeconds: state.elapsedSeconds,
+        elapsedSeconds: _elapsed,
       );
       _startTimer();
     }
     _persistSession();
   }
 
+  // FIX: _elapsed is updated BEFORE state and BEFORE the audio seek.
+  // Old code updated state but the timer's next tick still read the old
+  // _elapsed value (0 or wherever it was) and snapped back.
   Future<void> seek(Duration position) async {
-    await _audioPlayer.seek(position);
+    _elapsed = position.inSeconds;               // ← update counter first
+    state = state.copyWith(elapsedSeconds: _elapsed); // ← then state
+    await _audioPlayer.seek(position);           // ← then audio
   }
 
-  /// Ends session and clears everything. Call before navigating to reflection.
   Future<void> endSession() async {
     _timer?.cancel();
+    _elapsed = 0;
     await _audioPlayer.stop();
     await _repo.clearSessionState();
     state = const PlayerState.idle();
   }
 
-  // ── Timer ─────────────────────────────────────────────────────────────────
+  // ── Timer ────────────────────────────────────────────────────────────────
 
   void _startTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!state.isPlaying) return;
 
-      final elapsed = state.elapsedSeconds + 1;
+      // Increment the local counter — NOT state.elapsedSeconds
+      // Reading state inside a closure gives a stale snapshot on Riverpod.
+      _elapsed++;
+
       final duration = state.ambience?.durationSeconds ?? 0;
 
-      if (elapsed >= duration) {
-        // Session complete – stop timer, keep state for mini-player to detect
+      if (_elapsed >= duration) {
         _timer?.cancel();
         _audioPlayer.stop();
-        state = state.copyWith(elapsedSeconds: duration, isPlaying: false);
+        state = state.copyWith(
+          elapsedSeconds: duration,
+          isPlaying: false,
+        );
         _repo.clearSessionState();
       } else {
-        state = state.copyWith(elapsedSeconds: elapsed);
+        // Push the fresh counter value into state for the UI
+        state = state.copyWith(elapsedSeconds: _elapsed);
         _persistSession();
       }
     });
@@ -222,7 +237,7 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
     _repo.saveSessionState(SessionModel(
       ambienceId: state.ambienceId!,
       startedAt: DateTime.now(),
-      elapsedSeconds: state.elapsedSeconds,
+      elapsedSeconds: _elapsed,
       isPlaying: state.isPlaying,
     ));
   }
@@ -240,7 +255,7 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
 final playerRepositoryProvider = Provider((ref) => PlayerRepository());
 
 final playerProvider =
-    StateNotifierProvider<PlayerNotifier, PlayerState>((ref) {
+StateNotifierProvider<PlayerNotifier, PlayerState>((ref) {
   final repo = ref.watch(playerRepositoryProvider);
   return PlayerNotifier(repo, ref);
 });

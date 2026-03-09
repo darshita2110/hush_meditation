@@ -6,7 +6,7 @@ class AmbienceRepository {
   Future<List<AmbienceModel>> getAmbiences() async {
     try {
       final jsonString =
-          await rootBundle.loadString('assets/data/ambiences.json');
+      await rootBundle.loadString('assets/data/ambiences.json');
       final jsonData = jsonDecode(jsonString) as Map<String, dynamic>;
       final list = jsonData['ambiences'] as List;
       return list

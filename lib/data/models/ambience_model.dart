@@ -1,22 +1,34 @@
+import 'package:hive/hive.dart';
 
-class AmbienceModel {
+part 'ambience_model.g.dart';
 
+@HiveType(typeId: 0)
+class AmbienceModel extends HiveObject {
+  @HiveField(0)
   final String id;
+
+  @HiveField(1)
   final String title;
 
+  @HiveField(2)
   final String tag;
 
+  @HiveField(3)
   final int durationMinutes;
 
+  @HiveField(4)
   final String description;
 
+  @HiveField(5)
   final String imagePath;
 
+  @HiveField(6)
   final String audioPath;
 
+  @HiveField(7)
   final List<String> sensoryRecipes;
 
-  const AmbienceModel({
+  AmbienceModel({
     required this.id,
     required this.title,
     required this.tag,
@@ -51,14 +63,10 @@ class AmbienceModel {
     'sensoryRecipes': sensoryRecipes,
   };
 
+  // The slider uses this — was returning 0 because this getter was missing.
+  // 0 as denominator → elapsed/0 = NaN → clamps to 0.0 → slider always at start.
   int get durationSeconds => durationMinutes * 60;
 
-  String get durationDisplay => '$durationMinutes-${durationMinutes + 1} min';
-
-  bool hasTag(String filterTag) => tag.toLowerCase() == filterTag.toLowerCase();
-
-  bool matchesSearch(String query) {
-    if (query.isEmpty) return true;
-    return title.toLowerCase().contains(query.toLowerCase());
-  }
+  // Used in AmbienceCard
+  String get durationDisplay => '$durationMinutes min';
 }

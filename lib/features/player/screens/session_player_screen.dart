@@ -10,9 +10,9 @@ class SessionPlayerScreen extends ConsumerStatefulWidget {
   final String ambienceId;
 
   const SessionPlayerScreen({
-    Key? key,
+    super.key,
     required this.ambienceId,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<SessionPlayerScreen> createState() =>
@@ -20,6 +20,8 @@ class SessionPlayerScreen extends ConsumerStatefulWidget {
 }
 
 class _SessionPlayerScreenState extends ConsumerState<SessionPlayerScreen> {
+  double? _draggingValue;
+
   @override
   void initState() {
     super.initState();
@@ -32,6 +34,8 @@ class _SessionPlayerScreenState extends ConsumerState<SessionPlayerScreen> {
   Widget build(BuildContext context) {
     final playerState = ref.watch(playerProvider);
     final ambienceAsync = ref.watch(ambienceByIdProvider(widget.ambienceId));
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isPlaying = playerState.isPlaying;
 
     return Scaffold(
       appBar: AppBar(
@@ -47,12 +51,12 @@ class _SessionPlayerScreenState extends ConsumerState<SessionPlayerScreen> {
         data: (ambience) {
           final elapsed = playerState.elapsedSeconds;
           final total = ambience.durationSeconds;
-          final progress =
-              total > 0 ? (elapsed / total).clamp(0.0, 1.0) : 0.0;
+          final sliderValue = _draggingValue ??
+              (total > 0 ? (elapsed / total).clamp(0.0, 1.0) : 0.0);
 
           return Column(
             children: [
-              // ── Top: background + animation ──────────────────────────────
+              // ── Gradient hero ──────────────────────────────────────────
               Expanded(
                 child: Container(
                   width: double.infinity,
@@ -83,74 +87,111 @@ class _SessionPlayerScreenState extends ConsumerState<SessionPlayerScreen> {
                 ),
               ),
 
-              // ── Bottom: controls ─────────────────────────────────────────
+              // ── Controls panel ─────────────────────────────────────────
               Container(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-                color: Theme.of(context).scaffoldBackgroundColor,
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
+                color: isDark ? AppColors.gray800 : AppColors.white,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Timer text
+                    // Time labels
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(_formatTime(elapsed),
-                            style: AppTextStyles.caption),
-                        Text(_formatTime(total),
-                            style: AppTextStyles.caption),
+                        Text(_fmt(elapsed),
+                            style: AppTextStyles.caption.copyWith(
+                              color: isDark
+                                  ? AppColors.gray300
+                                  : AppColors.gray600,
+                            )),
+                        Text(_fmt(total),
+                            style: AppTextStyles.caption.copyWith(
+                              color: isDark
+                                  ? AppColors.gray300
+                                  : AppColors.gray600,
+                            )),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
 
-                    // ── Seekable progress bar ────────────────────────────
+                    // Seek slider
                     SliderTheme(
                       data: SliderTheme.of(context).copyWith(
                         trackHeight: 4,
                         thumbShape: const RoundSliderThumbShape(
-                            enabledThumbRadius: 6),
+                            enabledThumbRadius: 7),
                         overlayShape: const RoundSliderOverlayShape(
-                            overlayRadius: 14),
+                            overlayRadius: 16),
                         activeTrackColor: AppColors.primary,
-                        inactiveTrackColor: AppColors.gray200,
+                        inactiveTrackColor: isDark
+                            ? AppColors.gray600
+                            : AppColors.gray200,
                         thumbColor: AppColors.primary,
-                        overlayColor: AppColors.primary.withOpacity(0.2),
+                        overlayColor:
+                        AppColors.primary.withValues(alpha: 0.2),
                       ),
                       child: Slider(
-                        value: progress,
-                        onChanged: (value) {
-                          final seekTo =
-                              Duration(seconds: (value * total).round());
-                          ref
-                              .read(playerProvider.notifier)
-                              .seek(seekTo);
+                        value: sliderValue,
+                        onChangeStart: (v) =>
+                            setState(() => _draggingValue = v),
+                        onChanged: (v) =>
+                            setState(() => _draggingValue = v),
+                        onChangeEnd: (v) {
+                          setState(() => _draggingValue = null);
+                          ref.read(playerProvider.notifier).seek(
+                            Duration(seconds: (v * total).round()),
+                          );
                         },
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
 
-                    // ── Play / Pause button ──────────────────────────────
+                    // ── Play / Pause FAB ───────────────────────────────────
+                    // FIX: NO ValueKey on the FAB itself.
+                    // Previously ValueKey(isPlaying) was on FloatingActionButton,
+                    // which made Flutter destroy + recreate the entire FAB widget
+                    // on every tap. The first tap triggered the widget swap
+                    // animation; the second tap actually fired onPressed.
+                    // Solution: stable FAB (no key), ValueKey only on the Icon
+                    // inside AnimatedSwitcher so only the icon animates.
                     SizedBox(
                       width: 64,
                       height: 64,
                       child: FloatingActionButton(
                         backgroundColor: AppColors.primary,
-                        onPressed: () =>
-                            ref.read(playerProvider.notifier).togglePlayPause(),
-                        child: Icon(
-                          playerState.isPlaying
-                              ? Icons.pause
-                              : Icons.play_arrow,
-                          color: Colors.white,
-                          size: 32,
+                        heroTag: 'player_fab',
+                        onPressed: () => ref
+                            .read(playerProvider.notifier)
+                            .togglePlayPause(),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 150),
+                          child: Icon(
+                            isPlaying ? Icons.pause : Icons.play_arrow,
+                            // Key on Icon only — triggers switcher animation
+                            // without recreating the FAB
+                            key: ValueKey(isPlaying),
+                            color: Colors.white,
+                            size: 32,
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 20),
 
-                    // ── End session ──────────────────────────────────────
+                    // End Session
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: isDark
+                                ? AppColors.gray500
+                                : AppColors.gray300,
+                          ),
+                          foregroundColor: isDark
+                              ? AppColors.gray200
+                              : AppColors.gray700,
+                        ),
                         onPressed: () =>
                             _showEndSessionDialog(context, ref),
                         child: const Text('End Session'),
@@ -162,8 +203,7 @@ class _SessionPlayerScreenState extends ConsumerState<SessionPlayerScreen> {
             ],
           );
         },
-        loading: () =>
-            const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
       ),
     );
@@ -175,38 +215,39 @@ class _SessionPlayerScreenState extends ConsumerState<SessionPlayerScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('End Session?'),
         content: const Text(
-            'Your progress will be saved and you can write a reflection.'),
+          'Your progress will be saved and you can write a reflection.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () async {
+            onPressed: () {
               Navigator.pop(ctx);
-              await ref.read(playerProvider.notifier).endSession();
-              if (mounted) {
-                context.push('/reflection/${widget.ambienceId}');
-              }
+              _endAndNavigate();
             },
-            child: Text(
-              'End',
-              style: TextStyle(color: AppColors.error),
-            ),
+            child: Text('End',
+                style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
     );
   }
 
-  String _formatTime(int totalSeconds) {
-    final m = totalSeconds ~/ 60;
-    final s = (totalSeconds % 60).toString().padLeft(2, '0');
+  Future<void> _endAndNavigate() async {
+    await ref.read(playerProvider.notifier).endSession();
+    if (mounted) context.push('/reflection/${widget.ambienceId}');
+  }
+
+  String _fmt(int seconds) {
+    final m = seconds ~/ 60;
+    final s = (seconds % 60).toString().padLeft(2, '0');
     return '$m:$s';
   }
 }
 
-// ── Breathing animation ────────────────────────────────────────────────────────
+// ── Breathing circle ──────────────────────────────────────────────────────────
 
 class _BreathingCircle extends StatefulWidget {
   const _BreathingCircle();
@@ -227,7 +268,6 @@ class _BreathingCircleState extends State<_BreathingCircle>
       duration: const Duration(seconds: 4),
       vsync: this,
     )..repeat(reverse: true);
-
     _scale = Tween<double>(begin: 0.8, end: 1.2).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
@@ -248,10 +288,10 @@ class _BreathingCircleState extends State<_BreathingCircle>
         height: 140,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.white.withOpacity(0.25),
+          color: Colors.white.withValues(alpha: 0.25),
           boxShadow: [
             BoxShadow(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
               blurRadius: 40,
               spreadRadius: 10,
             ),

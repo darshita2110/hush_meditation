@@ -9,113 +9,214 @@ import 'package:arvyax_flutter_app/features/player/widgets/mini_player.dart';
 class AmbienceDetailScreen extends ConsumerWidget {
   final String ambienceId;
 
-  const AmbienceDetailScreen({
-    Key? key,
-    required this.ambienceId,
-  }) : super(key: key);
+  const AmbienceDetailScreen({super.key, required this.ambienceId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ambienceAsync = ref.watch(ambienceByIdProvider(ambienceId));
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
+    // Hero image fills full screen width at 280px height — cache at full width
+    final cacheW = (screenWidth * devicePixelRatio).round();
 
-    return ambienceAsync.when(
-      data: (ambience) => Scaffold(
-        bottomNavigationBar: const MiniPlayer(),
-        body: CustomScrollView(
+    return Scaffold(
+      bottomNavigationBar: const MiniPlayer(),
+      body: ambienceAsync.when(
+        data: (ambience) => CustomScrollView(
           slivers: [
+            // ── Hero image / gradient header ──────────────────────────────
             SliverAppBar(
               expandedHeight: 280,
               pinned: true,
+              backgroundColor: AppColors.primary,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => context.pop(),
+              ),
               flexibleSpace: FlexibleSpaceBar(
                 background: Stack(
                   fit: StackFit.expand,
                   children: [
                     Container(
                       decoration: const BoxDecoration(
-                          gradient: AppColors.breathingGradient),
+                        gradient: AppColors.breathingGradient,
+                      ),
                     ),
                     Image.asset(
                       ambience.imagePath,
                       fit: BoxFit.cover,
+                      // Cache at screen width — reused when user navigates
+                      // back and forward without re-decoding the full asset.
+                      cacheWidth: cacheW,
+                      gaplessPlayback: true,
                       errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                     ),
-                    const DecoratedBox(
+                    // Gradient overlay for title readability
+                    Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [Colors.transparent, Colors.black54],
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.6),
+                          ],
                         ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 16,
+                      left: 16,
+                      right: 16,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            ambience.title,
+                            style: AppTextStyles.h2
+                                .copyWith(color: Colors.white),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              _TagChip(tag: ambience.tag),
+                              const SizedBox(width: 8),
+                              Text(
+                                ambience.durationDisplay,
+                                style: AppTextStyles.body2
+                                    .copyWith(color: Colors.white70),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
             ),
+
+            // ── Body content ──────────────────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(ambience.title, style: AppTextStyles.h2),
-                        ),
-                        const SizedBox(width: 12),
-                        Chip(
-                          label: Text(ambience.tag),
-                          backgroundColor: AppColors.primaryLight,
-                          labelStyle: AppTextStyles.caption
-                              .copyWith(color: AppColors.primaryDark),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
                     Text(
-                      '${ambience.durationMinutes} minutes',
-                      style:
-                          AppTextStyles.caption.copyWith(color: AppColors.gray500),
+                      ambience.description,
+                      style: AppTextStyles.body1.copyWith(
+                        color: isDark
+                            ? AppColors.gray300
+                            : AppColors.gray700,
+                        height: 1.6,
+                      ),
                     ),
-                    const SizedBox(height: 20),
-                    Text(ambience.description, style: AppTextStyles.body1),
                     const SizedBox(height: 28),
-                    Text('Sensory Elements', style: AppTextStyles.h4),
+
+                    Text(
+                      'Sensory Recipe',
+                      style: AppTextStyles.h4.copyWith(
+                        color: isDark
+                            ? AppColors.white
+                            : AppColors.gray900,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: ambience.sensoryRecipes
-                          .map((r) => Chip(
-                                label: Text(r),
-                                backgroundColor: AppColors.gray100,
-                                labelStyle: AppTextStyles.caption,
-                              ))
+                          .map((r) =>
+                          _SensoryChip(label: r, isDark: isDark))
                           .toList(),
                     ),
-                    const SizedBox(height: 36),
+                    const SizedBox(height: 32),
+
                     SizedBox(
                       width: double.infinity,
-                      height: 56,
+                      height: 52,
                       child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
                         onPressed: () =>
-                            context.push('/player/${ambience.id}'),
-                        child: const Text('Start Session'),
+                            context.push('/player/$ambienceId'),
+                        child: Text(
+                          'Start Session',
+                          style: AppTextStyles.h5
+                              .copyWith(color: Colors.white),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
             ),
           ],
         ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
       ),
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
+    );
+  }
+}
+
+class _TagChip extends StatelessWidget {
+  final String tag;
+  const _TagChip({required this.tag});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        tag,
+        style: AppTextStyles.caption.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _SensoryChip extends StatelessWidget {
+  final String label;
+  final bool isDark;
+  const _SensoryChip({required this.label, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.gray700 : AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark
+              ? AppColors.gray600
+              : AppColors.primary.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Text(
+        label,
+        style: AppTextStyles.body2.copyWith(
+          color: isDark ? AppColors.white : AppColors.primaryDark,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
     );
   }
 }

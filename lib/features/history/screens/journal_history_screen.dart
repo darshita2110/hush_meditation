@@ -7,83 +7,114 @@ import 'package:arvyax_flutter_app/features/journal/controllers/journal_controll
 import 'package:arvyax_flutter_app/data/models/reflection_model.dart';
 
 class JournalHistoryScreen extends ConsumerWidget {
-  const JournalHistoryScreen({Key? key}) : super(key: key);
+  const JournalHistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reflections = ref.watch(journalProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Journal History')),
       body: reflections.isEmpty
           ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.book_outlined,
+                size: 64, color: AppColors.gray400),
+            const SizedBox(height: 16),
+            Text(
+              'No reflections yet.',
+              style: AppTextStyles.body1.copyWith(
+                color: isDark
+                    ? AppColors.gray300
+                    : AppColors.gray600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Start a session to begin.',
+              style: AppTextStyles.body2.copyWith(
+                color: isDark
+                    ? AppColors.gray400
+                    : AppColors.gray400,
+              ),
+            ),
+          ],
+        ),
+      )
+          : ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: reflections.length,
+        itemBuilder: (context, index) {
+          final r = reflections[index];
+          final formattedDate =
+          DateFormat('MMM d, y').format(r.createdAt);
+
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              contentPadding: const EdgeInsets.all(16),
+              title: Text(
+                r.ambienceTitle,
+                style: AppTextStyles.h5.copyWith(
+                  // Explicit colour — default title can be invisible
+                  // in dark mode depending on card background
+                  color: isDark
+                      ? AppColors.white
+                      : AppColors.gray900,
+                ),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.book_outlined,
-                      size: 64, color: AppColors.gray400),
-                  const SizedBox(height: 16),
-                  Text('No reflections yet.',
-                      style: AppTextStyles.body1
-                          .copyWith(color: AppColors.gray600)),
+                  const SizedBox(height: 6),
+                  Text(
+                    r.journalPreview,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.body2.copyWith(
+                      color: isDark
+                          ? AppColors.gray300
+                          : AppColors.gray600,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text('Start a session to begin.',
-                      style: AppTextStyles.body2
-                          .copyWith(color: AppColors.gray400)),
+                  Row(
+                    mainAxisAlignment:
+                    MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        formattedDate,
+                        style: AppTextStyles.caption.copyWith(
+                          color: isDark
+                              ? AppColors.gray400
+                              : AppColors.gray500,
+                        ),
+                      ),
+                      _MoodChip(mood: r.mood),
+                    ],
+                  ),
                 ],
               ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: reflections.length,
-              itemBuilder: (context, index) {
-                final r = reflections[index];
-                final formattedDate =
-                    DateFormat('MMM d, y').format(r.createdAt);
-                final preview = r.journalPreview;
-
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(16),
-                    title: Text(r.ambienceTitle,
-                        style: AppTextStyles.h5),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 6),
-                        Text(
-                          preview,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.body2
-                              .copyWith(color: AppColors.gray600),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(formattedDate,
-                                style: AppTextStyles.caption
-                                    .copyWith(color: AppColors.gray500)),
-                            _MoodChip(mood: r.mood),
-                          ],
-                        ),
-                      ],
-                    ),
-                    onTap: () => _showDetail(context, r),
-                  ),
-                );
-              },
+              onTap: () => _showDetail(context, r),
             ),
+          );
+        },
+      ),
     );
   }
 
   void _showDetail(BuildContext context, ReflectionModel r) {
+    final isDark =
+        Theme.of(context).brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor:
+      isDark ? AppColors.gray800 : AppColors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -97,31 +128,54 @@ class JournalHistoryScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle
+              // Drag handle
               Center(
                 child: Container(
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.gray300,
+                    color: isDark
+                        ? AppColors.gray600
+                        : AppColors.gray300,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              Text(r.ambienceTitle, style: AppTextStyles.h3),
+              Text(
+                r.ambienceTitle,
+                style: AppTextStyles.h3.copyWith(
+                  color: isDark
+                      ? AppColors.white
+                      : AppColors.gray900,
+                ),
+              ),
               const SizedBox(height: 4),
               Text(
                 DateFormat('MMM d, y – h:mm a').format(r.createdAt),
-                style: AppTextStyles.caption
-                    .copyWith(color: AppColors.gray500),
+                style: AppTextStyles.caption.copyWith(
+                  color: isDark
+                      ? AppColors.gray400
+                      : AppColors.gray500,
+                ),
               ),
               const SizedBox(height: 8),
               _MoodChip(mood: r.mood),
               const SizedBox(height: 20),
-              const Divider(),
+              Divider(
+                color: isDark
+                    ? AppColors.gray700
+                    : AppColors.gray200,
+              ),
               const SizedBox(height: 16),
-              Text(r.journalText, style: AppTextStyles.body1),
+              Text(
+                r.journalText,
+                style: AppTextStyles.body1.copyWith(
+                  color: isDark
+                      ? AppColors.gray200
+                      : AppColors.gray800,
+                ),
+              ),
             ],
           ),
         ),
@@ -144,8 +198,9 @@ class _MoodChip extends StatelessWidget {
       ),
       child: Text(
         mood,
-        style:
-            AppTextStyles.caption.copyWith(color: AppColors.primaryDark),
+        style: AppTextStyles.caption.copyWith(
+          color: AppColors.primaryDark,
+        ),
       ),
     );
   }

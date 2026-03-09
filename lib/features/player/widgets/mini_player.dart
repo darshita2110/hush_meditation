@@ -5,21 +5,20 @@ import 'package:arvyax_flutter_app/config/theme/app_colors.dart';
 import 'package:arvyax_flutter_app/config/theme/text_styles.dart';
 import 'package:arvyax_flutter_app/features/player/controllers/player_controller.dart';
 
-/// Persistent mini-player bar shown at the bottom of screens when a session
-/// is active but the user is not on the full player screen.
 class MiniPlayer extends ConsumerWidget {
-  const MiniPlayer({Key? key}) : super(key: key);
+  const MiniPlayer({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final playerState = ref.watch(playerProvider);
 
-    // Only show when there is an active (or paused) session
+    // Invisible when no session is active — takes zero space
     if (!playerState.hasActiveSession) return const SizedBox.shrink();
 
     final ambience = playerState.ambience!;
     final progress = ambience.durationSeconds > 0
-        ? playerState.elapsedSeconds / ambience.durationSeconds
+        ? (playerState.elapsedSeconds / ambience.durationSeconds)
+        .clamp(0.0, 1.0)
         : 0.0;
 
     return GestureDetector(
@@ -29,7 +28,8 @@ class MiniPlayer extends ConsumerWidget {
           color: AppColors.gray900,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              // Fixed: withValues instead of deprecated withOpacity
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, -2),
             ),
@@ -38,20 +38,23 @@ class MiniPlayer extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Progress bar – thin line at the very top
+            // Thin progress line at top
             LinearProgressIndicator(
-              value: progress.clamp(0.0, 1.0),
+              value: progress,
               minHeight: 2,
               backgroundColor: AppColors.gray700,
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.primary,
+              ),
             ),
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 10,
+              ),
               child: Row(
                 children: [
-                  // Gradient icon
+                  // Gradient icon tile
                   Container(
                     width: 40,
                     height: 40,
@@ -59,14 +62,19 @@ class MiniPlayer extends ConsumerWidget {
                       gradient: AppColors.breathingGradient,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.self_improvement,
-                        color: Colors.white, size: 20),
+                    child: const Icon(
+                      Icons.self_improvement,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 12),
-                  // Title + time
+
+                  // Title + elapsed time
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           ambience.title,
@@ -80,21 +88,27 @@ class MiniPlayer extends ConsumerWidget {
                         const SizedBox(height: 2),
                         Text(
                           _formatTime(playerState.elapsedSeconds),
-                          style: AppTextStyles.caption
-                              .copyWith(color: AppColors.gray400),
+                          style: AppTextStyles.caption.copyWith(
+                            // Explicit light colour — always on dark bg
+                            color: AppColors.gray400,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  // Play / Pause
+
+                  // Play / Pause button
                   IconButton(
                     icon: Icon(
-                      playerState.isPlaying ? Icons.pause : Icons.play_arrow,
+                      playerState.isPlaying
+                          ? Icons.pause
+                          : Icons.play_arrow,
                       color: AppColors.white,
                       size: 28,
                     ),
-                    onPressed: () =>
-                        ref.read(playerProvider.notifier).togglePlayPause(),
+                    onPressed: () => ref
+                        .read(playerProvider.notifier)
+                        .togglePlayPause(),
                   ),
                 ],
               ),
