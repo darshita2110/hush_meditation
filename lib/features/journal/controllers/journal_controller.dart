@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
-import 'package:arvyax_flutter_app/data/models/reflection_model.dart';
-import 'package:arvyax_flutter_app/data/repositories/journal_repository.dart';
+import 'package:hush/data/models/reflection_model.dart';
+import 'package:hush/data/repositories/journal_repository.dart';
 
 final journalRepositoryProvider = Provider((ref) => JournalRepository());
 

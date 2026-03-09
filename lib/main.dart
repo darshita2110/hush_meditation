@@ -17,20 +17,20 @@ void main() async {
 
   runApp(
     const ProviderScope(
-      child: ArvyaXApp(),
+      child: HushApp(),
     ),
   );
 }
 
-class ArvyaXApp extends ConsumerWidget {
-  const ArvyaXApp({super.key});
+class HushApp extends ConsumerWidget {
+  const HushApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final goRouter = ref.watch(goRouterProvider);
 
     return MaterialApp.router(
-      title: 'ArvyaX',
+      title: 'Hush',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       routerConfig: goRouter,

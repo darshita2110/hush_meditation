@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:arvyax_flutter_app/features/ambience/screens/ambience_list_screen.dart';
-import 'package:arvyax_flutter_app/features/ambience/screens/ambience_detail_screen.dart';
-import 'package:arvyax_flutter_app/features/player/screens/session_player_screen.dart';
-import 'package:arvyax_flutter_app/features/journal/screens/reflection_screen.dart';
-import 'package:arvyax_flutter_app/features/history/screens/journal_history_screen.dart';
+import 'package:hush/features/ambience/screens/ambience_list_screen.dart';
+import 'package:hush/features/ambience/screens/ambience_detail_screen.dart';
+import 'package:hush/features/player/screens/session_player_screen.dart';
+import 'package:hush/features/journal/screens/reflection_screen.dart';
+import 'package:hush/features/history/screens/journal_history_screen.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(

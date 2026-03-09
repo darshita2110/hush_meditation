@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:arvyax_flutter_app/config/theme/app_colors.dart';
-import 'package:arvyax_flutter_app/features/ambience/controllers/ambience_controller.dart';
-import 'package:arvyax_flutter_app/features/ambience/widgets/ambience_card.dart';
-import 'package:arvyax_flutter_app/features/player/widgets/mini_player.dart';
+import 'package:hush/config/theme/app_colors.dart';
+import 'package:hush/features/ambience/controllers/ambience_controller.dart';
+import 'package:hush/features/ambience/widgets/ambience_card.dart';
+import 'package:hush/features/player/widgets/mini_player.dart';
 
 class AmbienceListScreen extends ConsumerWidget {
   const AmbienceListScreen({super.key});
@@ -17,7 +17,7 @@ class AmbienceListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ArvyaX'),
+        title: const Text('Hush'),
         actions: [
           IconButton(
             icon: const Icon(Icons.history),

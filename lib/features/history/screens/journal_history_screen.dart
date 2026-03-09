@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:arvyax_flutter_app/config/theme/app_colors.dart';
-import 'package:arvyax_flutter_app/config/theme/text_styles.dart';
-import 'package:arvyax_flutter_app/features/journal/controllers/journal_controller.dart';
-import 'package:arvyax_flutter_app/data/models/reflection_model.dart';
+import 'package:hush/config/theme/app_colors.dart';
+import 'package:hush/config/theme/text_styles.dart';
+import 'package:hush/features/journal/controllers/journal_controller.dart';
+import 'package:hush/data/models/reflection_model.dart';
 
 class JournalHistoryScreen extends ConsumerWidget {
   const JournalHistoryScreen({super.key});

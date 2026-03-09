@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:arvyax_flutter_app/data/models/ambience_model.dart';
-import 'package:arvyax_flutter_app/data/models/session_model.dart';
-import 'package:arvyax_flutter_app/data/repositories/player_repository.dart';
-import 'package:arvyax_flutter_app/features/ambience/controllers/ambience_controller.dart';
+import 'package:hush/data/models/ambience_model.dart';
+import 'package:hush/data/models/session_model.dart';
+import 'package:hush/data/repositories/player_repository.dart';
+import 'package:hush/features/ambience/controllers/ambience_controller.dart';
 
 // ── State ─────────────────────────────────────────────────────────────────────
 

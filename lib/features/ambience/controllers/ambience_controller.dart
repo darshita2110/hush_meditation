@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:arvyax_flutter_app/data/models/ambience_model.dart';
-import 'package:arvyax_flutter_app/data/repositories/ambience_repository.dart';
+import 'package:hush/data/models/ambience_model.dart';
+import 'package:hush/data/repositories/ambience_repository.dart';
 
 final ambienceRepositoryProvider = Provider((ref) => AmbienceRepository());
 

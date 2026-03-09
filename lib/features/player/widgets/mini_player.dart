@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:arvyax_flutter_app/config/theme/app_colors.dart';
-import 'package:arvyax_flutter_app/config/theme/text_styles.dart';
-import 'package:arvyax_flutter_app/features/player/controllers/player_controller.dart';
+import 'package:hush/config/theme/app_colors.dart';
+import 'package:hush/config/theme/text_styles.dart';
+import 'package:hush/features/player/controllers/player_controller.dart';
 
 class MiniPlayer extends ConsumerWidget {
   const MiniPlayer({super.key});

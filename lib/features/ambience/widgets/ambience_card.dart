@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:arvyax_flutter_app/config/theme/app_colors.dart';
-import 'package:arvyax_flutter_app/config/theme/text_styles.dart';
-import 'package:arvyax_flutter_app/data/models/ambience_model.dart';
+import 'package:hush/config/theme/app_colors.dart';
+import 'package:hush/config/theme/text_styles.dart';
+import 'package:hush/data/models/ambience_model.dart';
 
 class AmbienceCard extends StatelessWidget {
   final AmbienceModel ambience;
